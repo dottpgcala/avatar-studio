@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avatar Studio — Valam</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --panel2:#1e2230; --border:#2a2f40;
+    --text:#e8eaf2; --muted:#8a90a5; --accent:#4f7cff; --accent2:#6c5ce7;
+    --ok:#2ecc71; --warn:#f39c12; --err:#e74c3c; --radius:14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,-apple-system,sans-serif; min-height:100vh;}
+  header{padding:22px 28px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px;}
+  header .logo{width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:18px;}
+  header h1{font-size:20px; font-weight:600;}
+  header .sub{color:var(--muted); font-size:13px;}
+  nav{display:flex; gap:6px; padding:14px 28px 0;}
+  nav button{background:none; border:none; color:var(--muted); font-size:14px; font-weight:600; padding:10px 18px; cursor:pointer; border-radius:10px 10px 0 0; border-bottom:2px solid transparent;}
+  nav button.active{color:var(--text); border-bottom-color:var(--accent); background:var(--panel);}
+  main{padding:24px 28px; max-width:1000px; margin:0 auto;}
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:22px; margin-bottom:18px;}
+  .card h2{font-size:16px; margin-bottom:6px;}
+  .card .hint{color:var(--muted); font-size:13px; margin-bottom:14px; line-height:1.5;}
+  label{display:block; font-size:13px; font-weight:600; margin:12px 0 6px;}
+  input[type=text], input[type=password], textarea, select{
+    width:100%; background:var(--panel2); border:1px solid var(--border); border-radius:10px;
+    color:var(--text); padding:11px 13px; font-size:14px; font-family:inherit;
+  }
+  textarea{min-height:160px; resize:vertical; line-height:1.55;}
+  input:focus, textarea:focus, select:focus{outline:none; border-color:var(--accent);}
+  .btn{background:var(--accent); color:#fff; border:none; border-radius:10px; padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer; margin-top:14px;}
+  .btn:hover{filter:brightness(1.12);}
+  .btn.secondary{background:var(--panel2); border:1px solid var(--border); color:var(--text);}
+  .btn.danger{background:transparent; border:1px solid var(--err); color:var(--err);}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+  .row{display:flex; gap:14px; flex-wrap:wrap;}
+  .row > *{flex:1; min-width:220px;}
+  .status{margin-top:14px; padding:12px 14px; border-radius:10px; font-size:13.5px; line-height:1.5; display:none; white-space:pre-wrap;}
+  .status.show{display:block;}
+  .status.info{background:rgba(79,124,255,.12); border:1px solid rgba(79,124,255,.4);}
+  .status.ok{background:rgba(46,204,113,.10); border:1px solid rgba(46,204,113,.4);}
+  .status.err{background:rgba(231,76,60,.10); border:1px solid rgba(231,76,60,.4);}
+  .profile-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; margin-top:8px;}
+  .profile-card{background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center; position:relative;}
+  .profile-card img{width:84px; height:84px; border-radius:50%; object-fit:cover; border:2px solid var(--accent); margin-bottom:10px;}
+  .profile-card .name{font-weight:600; font-size:15px;}
+  .profile-card .meta{color:var(--muted); font-size:12px; margin-top:4px; line-height:1.5;}
+  .profile-card .del{position:absolute; top:8px; right:10px; background:none; border:none; color:var(--muted); cursor:pointer; font-size:15px;}
+  .profile-card .del:hover{color:var(--err);}
+  .counter{font-size:12.5px; color:var(--muted); margin-top:6px;}
+  .counter b.over{color:var(--err);}
+  .steps{margin-top:16px; display:none;}
+  .steps.show{display:block;}
+  .step{display:flex; align-items:center; gap:10px; padding:8px 0; font-size:14px; color:var(--muted);}
+  .step .dot{width:22px; height:22px; border-radius:50%; background:var(--panel2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0;}
+  .step.active{color:var(--text);} .step.active .dot{border-color:var(--accent); color:var(--accent);}
+  .step.done{color:var(--ok);} .step.done .dot{background:var(--ok); border-color:var(--ok); color:#fff;}
+  video{width:100%; max-width:560px; border-radius:12px; margin-top:16px; display:block;}
+  .hist-item{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:13px 4px; border-bottom:1px solid var(--border); font-size:14px;}
+  .hist-item .t{color:var(--muted); font-size:12px;}
+  a{color:var(--accent);}
+  .badge{display:inline-block; padding:3px 10px; border-radius:999px; font-size:11.5px; font-weight:600; margin-left:8px;}
+  .badge.ok{background:rgba(46,204,113,.15); color:var(--ok);}
+  .badge.no{background:rgba(231,76,60,.12); color:var(--err);}
+  .filebox{border:1.5px dashed var(--border); border-radius:10px; padding:18px; text-align:center; color:var(--muted); font-size:13.5px; cursor:pointer; margin-top:6px;}
+  .filebox:hover{border-color:var(--accent); color:var(--text);}
+  .filebox.hasfile{border-color:var(--ok); color:var(--ok);}
+  footer{text-align:center; color:var(--muted); font-size:12px; padding:20px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">AV</div>
+  <div>
+    <h1>Avatar Studio</h1>
+    <div class="sub">Video avatar con voce clonata — pronto per LinkedIn</div>
+  </div>
+</header>
+
+<nav>
+  <button data-tab="create" class="active">🎬 Crea video</button>
+  <button data-tab="profiles">👤 Profili</button>
+  <button data-tab="history">🕘 Cronologia</button>
+  <button data-tab="settings">⚙️ Impostazioni</button>
+</nav>
+
+<main>
+
+<!-- ============ TAB: CREA VIDEO ============ -->
+<section id="tab-create">
+  <div class="card">
+    <h2>Nuovo video</h2>
+    <div class="hint">Scegli il profilo, incolla il testo dell'annuncio (max ~2 minuti) e genera il video. La voce sarà quella clonata del profilo, con labbra sincronizzate.</div>
+
+    <div class="row">
+      <div>
+        <label>Profilo</label>
+        <select id="vidProfile"></select>
+      </div>
+      <div>
+        <label>Formato video</label>
+        <select id="vidFormat">
+          <option value="1080x1080">Quadrato 1080×1080 (feed LinkedIn — consigliato)</option>
+          <option value="1080x1920">Verticale 1080×1920</option>
+          <option value="1920x1080">Orizzontale 1920×1080</option>
+        </select>
+      </div>
+    </div>
+
+    <label>Testo dell'annuncio</label>
+    <textarea id="vidText" placeholder="Incolla qui il testo che l'avatar dovrà leggere..."></textarea>
+    <div class="counter">Caratteri: <b id="charCount">0</b> / ~2000 &nbsp;·&nbsp; Durata stimata: <b id="durEst">0:00</b> (max consigliato 2:00)</div>
+
+    <div class="row">
+      <button class="btn" id="btnGenerate">🎬 Genera video</button>
+      <button class="btn secondary" id="btnPreviewAudio">🔊 Anteprima solo voce</button>
+    </div>
+
+    <div class="steps" id="genSteps">
+      <div class="step" data-step="1"><div class="dot">1</div> Sintesi vocale con la tua voce (ElevenLabs)</div>
+      <div class="step" data-step="2"><div class="dot">2</div> Caricamento audio su HeyGen</div>
+      <div class="step" data-step="3"><div class="dot">3</div> Generazione video avatar (lip-sync)</div>
+      <div class="step" data-step="4"><div class="dot">4</div> Rendering completato</div>
+    </div>
+
+    <div class="status" id="vidStatus"></div>
+    <audio id="audioPreview" controls style="display:none; margin-top:14px; width:100%; max-width:560px;"></audio>
+    <video id="videoResult" controls style="display:none;"></video>
+    <div id="videoActions" style="display:none;">
+      <a id="videoDownload" class="btn" style="display:inline-block; text-decoration:none;" download>⬇️ Scarica MP4 per LinkedIn</a>
+      <div class="hint" style="margin-top:10px;">⚠️ Il link HeyGen scade dopo 7 giorni: scarica subito il file.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB: PROFILI ============ -->
+<section id="tab-profiles" style="display:none;">
+  <div class="card">
+    <h2>Profili avatar</h2>
+    <div class="hint">Ogni profilo è una persona: foto (avatar) + voce clonata. Oggi il tuo, domani quello di un collega per la sua rubrica.</div>
+    <div class="profile-grid" id="profileGrid"></div>
+  </div>
+
+  <div class="card">
+    <h2>➕ Nuovo profilo</h2>
+    <label>Nome</label>
+    <input type="text" id="pName" placeholder="Es. Piergiorgio — oppure: Marco (Credit Corner)">
+
+    <label>Foto (viso o mezzobusto, sfondo neutro, ben illuminata)</label>
+    <div class="filebox" id="photoBox" onclick="document.getElementById('pPhoto').click()">📷 Clicca per scegliere la foto (JPG/PNG)</div>
+    <input type="file" id="pPhoto" accept="image/jpeg,image/png" style="display:none;">
+
+    <label>Voce</label>
+    <div class="row">
+      <div>
+        <select id="pVoiceMode">
+          <option value="clone">Clona da campioni audio (consigliato)</option>
+          <option value="existing">Usa un Voice ID ElevenLabs esistente</option>
+        </select>
+      </div>
+    </div>
+    <div id="voiceCloneBox">
+      <div class="filebox" id="audioBox" onclick="document.getElementById('pAudio').click()">🎙️ Clicca per scegliere 1–3 file audio della voce (MP3/WAV/M4A, totale 1–3 minuti, voce pulita senza rumori)</div>
+      <input type="file" id="pAudio" accept="audio/*" multiple style="display:none;">
+    </div>
+    <div id="voiceIdBox" style="display:none;">
+      <input type="text" id="pVoiceId" placeholder="Voice ID ElevenLabs (es. pNInz6obpgDQGcFmaJgB)">
+    </div>
+
+    <button class="btn" id="btnCreateProfile">Crea profilo</button>
+    <div class="status" id="profStatus"></div>
+  </div>
+</section>
+
+<!-- ============ TAB: CRONOLOGIA ============ -->
+<section id="tab-history" style="display:none;">
+  <div class="card">
+    <h2>Video generati</h2>
+    <div class="hint">I link ai video HeyGen scadono dopo 7 giorni. Scarica sempre i file appena pronti.</div>
+    <div id="histList"></div>
+  </div>
+</section>
+
+<!-- ============ TAB: IMPOSTAZIONI ============ -->
+<section id="tab-settings" style="display:none;">
+  <div class="card">
+    <h2>API Key</h2>
+    <div class="hint">Le chiavi restano <b>solo nel tuo browser</b> (mai nel codice pubblicato su GitHub). Inseriscile una volta sola.</div>
+
+    <label>ElevenLabs API Key <span class="badge no" id="elBadge">non verificata</span></label>
+    <input type="password" id="setElKey" placeholder="xi-...">
+
+    <label>HeyGen API Key <span class="badge no" id="hgBadge">non verificata</span></label>
+    <input type="password" id="setHgKey" placeholder="Chiave API HeyGen">
+
+    <label>Proxy CORS (opzionale — solo se HeyGen rifiuta le chiamate dal browser)</label>
+    <input type="text" id="setProxy" placeholder="https://tuo-worker.workers.dev/?url=">
+    <div class="hint" style="margin-top:6px;">Se durante la generazione compare un errore di rete su HeyGen, pubblica il file <code>cloudflare-worker.js</code> incluso nel progetto (gratuito) e incolla qui il suo indirizzo.</div>
+
+    <div class="row">
+      <button class="btn" id="btnSaveSettings">Salva</button>
+      <button class="btn secondary" id="btnTestKeys">Verifica chiavi</button>
+    </div>
+    <div class="status" id="setStatus"></div>
+  </div>
+
+  <div class="card">
+    <h2>Backup</h2>
+    <div class="hint">Esporta profili e impostazioni in un file JSON (utile se cambi browser o computer).</div>
+    <div class="row">
+      <button class="btn secondary" id="btnExport">⬇️ Esporta configurazione</button>
+      <button class="btn secondary" onclick="document.getElementById('impFile').click()">⬆️ Importa configurazione</button>
+    </div>
+    <input type="file" id="impFile" accept="application/json" style="display:none;">
+  </div>
+</section>
+
+</main>
+<footer>Avatar Studio · Motori: ElevenLabs (voce) + HeyGen (video) · Le API key non lasciano mai il tuo browser</footer>
+
+<script>
+'use strict';
+/* ================= STORAGE (con guardia: se localStorage non disponibile, memoria volatile) ================= */
+const mem = {};
+const store = {
+  get(k, def){ try{ const v = localStorage.getItem(k); return v===null ? def : JSON.parse(v); } catch(e){ return (k in mem) ? mem[k] : def; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); } catch(e){ mem[k]=v; } }
+};
+let settings = store.get('av_settings', {elKey:'', hgKey:'', proxy:''});
+let profiles = store.get('av_profiles', []);
+let history  = store.get('av_history', []);
+
+/* ================= HELPERS ================= */
+const $ = id => document.getElementById(id);
+function show(el, cls, msg){ el.className = 'status show ' + cls; el.innerHTML = msg; }
+function hide(el){ el.className = 'status'; }
+function hgUrl(url){ return settings.proxy ? settings.proxy + encodeURIComponent(url) : url; }
+function esc(s){ const d=document.createElement('div'); d.textContent=s??''; return d.innerHTML; }
+async function jfetch(url, opts, errLabel){
+  let r;
+  try { r = await fetch(url, opts); }
+  catch(e){ throw new Error(errLabel + ': errore di rete/CORS. ' + (url.includes('heygen') && !settings.proxy ? 'Configura il Proxy CORS nelle Impostazioni (vedi README).' : e.message)); }
+  const text = await r.text();
+  let j; try { j = JSON.parse(text); } catch(e){ j = {raw:text}; }
+  if(!r.ok) throw new Error(errLabel + ' (HTTP ' + r.status + '): ' + (j?.error?.message || j?.message || j?.detail?.message || JSON.stringify(j).slice(0,300)));
+  return j;
+}
+
+/* ================= TABS ================= */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    ['create','profiles','history','settings'].forEach(t=> $('tab-'+t).style.display = (t===b.dataset.tab?'':'none'));
+    if(b.dataset.tab==='profiles') renderProfiles();
+    if(b.dataset.tab==='history') renderHistory();
+    if(b.dataset.tab==='create') renderProfileSelect();
+  };
+});
+
+/* ================= SETTINGS ================= */
+$('setElKey').value = settings.elKey; $('setHgKey').value = settings.hgKey; $('setProxy').value = settings.proxy;
+$('btnSaveSettings').onclick = ()=>{
+  settings = {elKey: $('setElKey').value.trim(), hgKey: $('setHgKey').value.trim(), proxy: $('setProxy').value.trim()};
+  store.set('av_settings', settings);
+  show($('setStatus'),'ok','Impostazioni salvate nel browser.');
+};
+$('btnTestKeys').onclick = async ()=>{
+  show($('setStatus'),'info','Verifica in corso...');
+  settings = {elKey: $('setElKey').value.trim(), hgKey: $('setHgKey').value.trim(), proxy: $('setProxy').value.trim()};
+  store.set('av_settings', settings);
+  let msg = '';
+  try {
+    const u = await jfetch('https://api.elevenlabs.io/v1/user/subscription', {headers:{'xi-api-key':settings.elKey}}, 'ElevenLabs');
+    msg += '✅ ElevenLabs OK — piano: ' + esc(u.tier||'?') + ', caratteri: ' + (u.character_count??'?') + '/' + (u.character_limit??'?') + '\n';
+    $('elBadge').className='badge ok'; $('elBadge').textContent='verificata';
+  } catch(e){ msg += '❌ ' + esc(e.message) + '\n'; $('elBadge').className='badge no'; $('elBadge').textContent='errore'; }
+  try {
+    const q = await jfetch(hgUrl('https://api.heygen.com/v2/user/remaining_quota'), {headers:{'x-api-key':settings.hgKey}}, 'HeyGen');
+    msg += '✅ HeyGen OK — quota residua: ' + esc(JSON.stringify(q.data?.remaining_quota ?? q.data ?? '?'));
+    $('hgBadge').className='badge ok'; $('hgBadge').textContent='verificata';
+  } catch(e){ msg += '❌ ' + esc(e.message); $('hgBadge').className='badge no'; $('hgBadge').textContent='errore'; }
+  show($('setStatus'), msg.includes('❌')?'err':'ok', msg);
+};
+
+/* Backup */
+$('btnExport').onclick = ()=>{
+  const blob = new Blob([JSON.stringify({settings, profiles, history}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'avatar-studio-backup.json'; a.click();
+};
+$('impFile').onchange = async e=>{
+  try {
+    const j = JSON.parse(await e.target.files[0].text());
+    if(j.settings) { settings=j.settings; store.set('av_settings',settings); $('setElKey').value=settings.elKey; $('setHgKey').value=settings.hgKey; $('setProxy').value=settings.proxy; }
+    if(j.profiles) { profiles=j.profiles; store.set('av_profiles',profiles); }
+    if(j.history)  { history=j.history;  store.set('av_history',history); }
+    show($('setStatus'),'ok','Configurazione importata.'); renderProfiles(); renderProfileSelect();
+  } catch(err){ show($('setStatus'),'err','File non valido: '+esc(err.message)); }
+};
+
+/* ================= PROFILES ================= */
+let photoFile = null, audioFiles = [];
+$('pPhoto').onchange = e=>{ photoFile = e.target.files[0]||null; const b=$('photoBox'); if(photoFile){ b.classList.add('hasfile'); b.textContent='✅ '+photoFile.name; } };
+$('pAudio').onchange = e=>{ audioFiles = [...e.target.files]; const b=$('audioBox'); if(audioFiles.length){ b.classList.add('hasfile'); b.textContent='✅ '+audioFiles.map(f=>f.name).join(', '); } };
+$('pVoiceMode').onchange = e=>{ const c = e.target.value==='clone'; $('voiceCloneBox').style.display=c?'':'none'; $('voiceIdBox').style.display=c?'none':''; };
+
+function thumb(file){ return new Promise(res=>{
+  const img = new Image(); const fr = new FileReader();
+  fr.onload = ()=>{ img.onload = ()=>{ const c=document.createElement('canvas'); const s=Math.min(img.width,img.height); c.width=c.height=128;
+    c.getContext('2d').drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,128,128); res(c.toDataURL('image/jpeg',.8)); }; img.src=fr.result; };
+  fr.readAsDataURL(file);
+});}
+
+$('btnCreateProfile').onclick = async ()=>{
+  const st = $('profStatus'); const name = $('pName').value.trim();
+  if(!settings.elKey || !settings.hgKey) return show(st,'err','Prima inserisci e verifica le API key nelle Impostazioni.');
+  if(!name) return show(st,'err','Inserisci il nome del profilo.');
+  if(!photoFile) return show(st,'err','Carica una foto.');
+  const cloneMode = $('pVoiceMode').value==='clone';
+  if(cloneMode && !audioFiles.length) return show(st,'err','Carica almeno un file audio della voce.');
+  if(!cloneMode && !$('pVoiceId').value.trim()) return show(st,'err','Inserisci il Voice ID.');
+  $('btnCreateProfile').disabled = true;
+  try {
+    show(st,'info','1/3 · Carico la foto su HeyGen...');
+    const up = await jfetch(hgUrl('https://upload.heygen.com/v1/talking_photo'),
+      {method:'POST', headers:{'x-api-key':settings.hgKey,'Content-Type':photoFile.type}, body:photoFile}, 'HeyGen (upload foto)');
+    const talkingPhotoId = up.data?.talking_photo_id || up.data?.id;
+    if(!talkingPhotoId) throw new Error('HeyGen non ha restituito un talking_photo_id: '+JSON.stringify(up).slice(0,200));
+
+    let voiceId;
+    if(cloneMode){
+      show(st,'info','2/3 · Clono la voce su ElevenLabs (può richiedere ~1 minuto)...');
+      const fd = new FormData();
+      fd.append('name', 'AvatarStudio - '+name);
+      audioFiles.forEach(f=>fd.append('files', f));
+      const v = await jfetch('https://api.elevenlabs.io/v1/voices/add', {method:'POST', headers:{'xi-api-key':settings.elKey}, body:fd}, 'ElevenLabs (clonazione voce)');
+      voiceId = v.voice_id;
+    } else {
+      voiceId = $('pVoiceId').value.trim();
+    }
+
+    show(st,'info','3/3 · Salvo il profilo...');
+    profiles.push({id:'p'+Math.random().toString(36).slice(2), name, talkingPhotoId, voiceId, photo: await thumb(photoFile), created: new Date().toISOString().slice(0,10)});
+    store.set('av_profiles', profiles);
+    show(st,'ok','✅ Profilo "'+esc(name)+'" creato. Ora puoi generare video dalla scheda "Crea video".');
+    $('pName').value=''; photoFile=null; audioFiles=[]; $('pVoiceId').value='';
+    $('photoBox').classList.remove('hasfile'); $('photoBox').textContent='📷 Clicca per scegliere la foto (JPG/PNG)';
+    $('audioBox').classList.remove('hasfile'); $('audioBox').textContent='🎙️ Clicca per scegliere 1–3 file audio della voce';
+    renderProfiles(); renderProfileSelect();
+  } catch(e){ show(st,'err','❌ '+esc(e.message)); }
+  $('btnCreateProfile').disabled = false;
+};
+
+function renderProfiles(){
+  const g = $('profileGrid');
+  if(!profiles.length){ g.innerHTML = '<div class="hint">Nessun profilo ancora. Creane uno qui sotto.</div>'; return; }
+  g.innerHTML = profiles.map(p=>`
+    <div class="profile-card">
+      <button class="del" title="Elimina" onclick="delProfile('${p.id}')">✕</button>
+      <img src="${p.photo}" alt="">
+      <div class="name">${esc(p.name)}</div>
+      <div class="meta">Voce: ${esc((p.voiceId||'').slice(0,10))}…<br>Creato: ${esc(p.created)}</div>
+    </div>`).join('');
+}
+window.delProfile = id=>{
+  const p = profiles.find(x=>x.id===id);
+  if(!confirm('Eliminare il profilo "'+(p?.name||'')+'"? (La voce resta su ElevenLabs e la foto su HeyGen)')) return;
+  profiles = profiles.filter(x=>x.id!==id); store.set('av_profiles',profiles); renderProfiles(); renderProfileSelect();
+};
+
+/* ================= CREATE VIDEO ================= */
+function renderProfileSelect(){
+  $('vidProfile').innerHTML = profiles.length
+    ? profiles.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')
+    : '<option value="">— crea prima un profilo —</option>';
+}
+$('vidText').oninput = ()=>{
+  const n = $('vidText').value.length;
+  $('charCount').textContent = n;
+  $('charCount').className = n>2200 ? 'over' : '';
+  const sec = Math.round(n/16.5); // ~ parlato italiano
+  $('durEst').textContent = Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');
+  $('durEst').className = sec>120 ? 'over' : '';
+};
+
+function setStep(n, state){
+  document.querySelectorAll('#genSteps .step').forEach(s=>{
+    const k = +s.dataset.step;
+    s.className = 'step' + (k<n?' done': k===n ? (state==='done'?' done':' active') : '');
+  });
+}
+
+async function ttsElevenLabs(profile, text){
+  const r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+profile.voiceId+'?output_format=mp3_44100_128', {
+    method:'POST',
+    headers:{'xi-api-key':settings.elKey,'Content-Type':'application/json'},
+    body: JSON.stringify({text, model_id:'eleven_multilingual_v2', voice_settings:{stability:0.5, similarity_boost:0.8, style:0.2}})
+  });
+  if(!r.ok){ let t=await r.text(); throw new Error('ElevenLabs TTS (HTTP '+r.status+'): '+t.slice(0,300)); }
+  return await r.blob();
+}
+
+$('btnPreviewAudio').onclick = async ()=>{
+  const st=$('vidStatus'); const p = profiles.find(x=>x.id===$('vidProfile').value);
+  const text = $('vidText').value.trim();
+  if(!p) return show(st,'err','Crea prima un profilo.');
+  if(!text) return show(st,'err','Inserisci il testo.');
+  $('btnPreviewAudio').disabled=true;
+  try {
+    show(st,'info','Genero l\'anteprima audio...');
+    const blob = await ttsElevenLabs(p, text);
+    const a=$('audioPreview'); a.src=URL.createObjectURL(blob); a.style.display='block'; a.play();
+    show(st,'ok','Anteprima pronta. Se la voce ti convince, genera il video.');
+  } catch(e){ show(st,'err','❌ '+esc(e.message)); }
+  $('btnPreviewAudio').disabled=false;
+};
+
+$('btnGenerate').onclick = async ()=>{
+  const st=$('vidStatus'); const p = profiles.find(x=>x.id===$('vidProfile').value);
+  const text = $('vidText').value.trim();
+  if(!settings.elKey || !settings.hgKey) return show(st,'err','Configura le API key nelle Impostazioni.');
+  if(!p) return show(st,'err','Crea prima un profilo nella scheda Profili.');
+  if(!text) return show(st,'err','Inserisci il testo dell\'annuncio.');
+  if(text.length>2600 && !confirm('Il testo supera i 2 minuti stimati. Continuare comunque?')) return;
+  $('btnGenerate').disabled=true; $('genSteps').classList.add('show');
+  $('videoResult').style.display='none'; $('videoActions').style.display='none';
+  try {
+    // 1) TTS
+    setStep(1); show(st,'info','Sintesi vocale in corso...');
+    const audioBlob = await ttsElevenLabs(p, text);
+    const a=$('audioPreview'); a.src=URL.createObjectURL(audioBlob); a.style.display='block';
+
+    // 2) upload audio -> HeyGen asset
+    setStep(2); show(st,'info','Carico l\'audio su HeyGen...');
+    const asset = await jfetch(hgUrl('https://upload.heygen.com/v1/asset'),
+      {method:'POST', headers:{'x-api-key':settings.hgKey,'Content-Type':'audio/mpeg'}, body:audioBlob}, 'HeyGen (upload audio)');
+    const audioAssetId = asset.data?.id;
+    if(!audioAssetId) throw new Error('HeyGen non ha restituito l\'asset id: '+JSON.stringify(asset).slice(0,200));
+
+    // 3) generate video
+    setStep(3); show(st,'info','Generazione video avviata: il rendering richiede in genere 1–5 minuti. Lascia la pagina aperta.');
+    const [w,h] = $('vidFormat').value.split('x').map(Number);
+    const gen = await jfetch(hgUrl('https://api.heygen.com/v2/video/generate'), {
+      method:'POST',
+      headers:{'x-api-key':settings.hgKey,'Content-Type':'application/json'},
+      body: JSON.stringify({
+        title: 'AvatarStudio - '+p.name+' - '+new Date().toISOString().slice(0,16),
+        video_inputs: [{
+          character: {type:'talking_photo', talking_photo_id: p.talkingPhotoId},
+          voice: {type:'audio', audio_asset_id: audioAssetId},
+          background: {type:'color', value:'#f4f5f8'}
+        }],
+        dimension: {width:w, height:h}
+      })
+    }, 'HeyGen (generazione video)');
+    const videoId = gen.data?.video_id;
+    if(!videoId) throw new Error('HeyGen non ha restituito un video_id: '+JSON.stringify(gen).slice(0,200));
+
+    // 4) poll
+    let videoUrl = null, tries = 0;
+    while(tries++ < 120){
+      await new Promise(r=>setTimeout(r, 8000));
+      const s = await jfetch(hgUrl('https://api.heygen.com/v1/video_status.get?video_id='+videoId),
+        {headers:{'x-api-key':settings.hgKey}}, 'HeyGen (stato video)');
+      const status = s.data?.status;
+      show(st,'info','Rendering in corso... stato: '+esc(status||'?')+' ('+Math.round(tries*8/60*10)/10+' min)');
+      if(status==='completed'){ videoUrl = s.data.video_url; break; }
+      if(status==='failed') throw new Error('Rendering fallito: '+JSON.stringify(s.data?.error||{}).slice(0,300));
+    }
+    if(!videoUrl) throw new Error('Timeout: il rendering non si è completato entro 16 minuti. Controlla su app.heygen.com.');
+
+    setStep(4,'done');
+    $('videoResult').src = videoUrl; $('videoResult').style.display='block';
+    $('videoDownload').href = videoUrl; $('videoActions').style.display='block';
+    show(st,'ok','✅ Video pronto! Scaricalo e caricalo su LinkedIn (il link scade in 7 giorni).');
+    history.unshift({date:new Date().toLocaleString('it-CH'), profile:p.name, chars:text.length, url:videoUrl, preview:text.slice(0,80)});
+    history = history.slice(0,50); store.set('av_history', history);
+  } catch(e){ show(st,'err','❌ '+esc(e.message)); }
+  $('btnGenerate').disabled=false;
+};
+
+/* ================= HISTORY ================= */
+function renderHistory(){
+  $('histList').innerHTML = history.length ? history.map(h=>`
+    <div class="hist-item">
+      <div><b>${esc(h.profile)}</b> — ${esc(h.preview)}…<div class="t">${esc(h.date)} · ${h.chars} caratteri</div></div>
+      <a href="${h.url}" target="_blank" rel="noopener">Apri video</a>
+    </div>`).join('') : '<div class="hint">Nessun video ancora.</div>';
+}
+
+/* init */
+renderProfileSelect(); renderProfiles();
+</script>
+</body>
+</html>
